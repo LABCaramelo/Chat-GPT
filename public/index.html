@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <title>ChatGPT</title>
+  <meta name="color-scheme" content="dark light">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script>
+    // Aplica o tema antes da primeira pintura para não piscar.
+    try {
+      const theme = JSON.parse(localStorage.getItem('settings') || '{}').theme;
+      if (theme === 'dark' || theme === 'light') document.documentElement.dataset.theme = theme;
+    } catch {}
+  </script>
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar" aria-label="Barra lateral">
+      <div class="sidebar-rail">
+        <button class="icon-btn rail-toggle" data-action="toggle-sidebar" aria-label="Abrir barra lateral" data-tip="Abrir barra lateral" data-icon="sidebar"></button>
+        <button class="icon-btn" data-action="new-chat" aria-label="Novo chat" data-tip="Novo chat" data-icon="newChat"></button>
+        <button class="icon-btn" data-action="open-search" aria-label="Buscar chats" data-tip="Buscar chats" data-icon="search"></button>
+        <div class="rail-spacer"></div>
+        <button class="icon-btn" data-action="open-settings" aria-label="Configurações" data-tip="Configurações" data-icon="settings"></button>
+      </div>
+
+      <div class="sidebar-panel">
+        <div class="sidebar-head">
+          <a class="wordmark" href="/" data-action="new-chat" aria-label="Logotipo do ChatGPT"><span class="app-name">ChatGPT</span></a>
+          <button class="icon-btn" data-action="toggle-sidebar" aria-label="Fechar barra lateral" data-tip="Fechar barra lateral" data-icon="sidebar"></button>
+        </div>
+        <nav class="sidebar-nav">
+          <a class="nav-item" href="/" data-action="new-chat"><span data-icon="newChat"></span><span>Novo chat</span><kbd>Ctrl Shift O</kbd></a>
+          <button class="nav-item" data-action="open-search"><span data-icon="search"></span><span>Buscar chats</span><kbd>Ctrl K</kbd></button>
+        </nav>
+        <div class="history" id="history">
+          <h2 class="history-title">Chats</h2>
+          <ol class="history-list" id="history-list"></ol>
+          <p class="history-empty" id="history-empty" hidden>Suas conversas aparecem aqui.</p>
+        </div>
+        <div class="sidebar-foot">
+          <button class="nav-item" data-action="open-settings"><span data-icon="settings"></span><span>Configurações</span></button>
+        </div>
+      </div>
+    </aside>
+    <div class="backdrop" data-action="toggle-sidebar" hidden></div>
+
+    <main class="main" id="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="icon-btn mobile-only" data-action="toggle-sidebar" aria-label="Abrir barra lateral" data-icon="menu"></button>
+          <div class="model-picker">
+            <button class="model-btn" id="model-btn" aria-haspopup="dialog" aria-expanded="false">
+              <span class="app-name">ChatGPT</span>
+              <span class="model-name" id="model-name"></span>
+              <span data-icon="chevronDown"></span>
+            </button>
+            <div class="menu model-menu" id="model-menu" role="dialog" aria-label="Modelo" hidden>
+              <div class="menu-label">Modelo</div>
+              <div id="model-list"></div>
+            </div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="icon-btn mobile-only" data-action="new-chat" aria-label="Novo chat" data-icon="newChat"></button>
+          <button class="icon-btn temp-btn" id="temp-btn" data-action="toggle-temporary" aria-pressed="false" aria-label="Chat temporário" data-tip="Ativar chat temporário" data-icon="temporary"></button>
+        </div>
+      </header>
+
+      <div class="content" id="content">
+        <div class="scroller" id="scroller">
+          <div class="thread" id="thread" role="region" aria-label="Conversa"></div>
+        </div>
+        <button class="scroll-down" id="scroll-down" aria-label="Rolar até o fim" data-icon="arrowDown" hidden></button>
+
+        <section class="home" id="home">
+          <h1 id="home-title">Por onde começamos?</h1>
+          <p class="home-sub" id="home-sub" hidden>Este chat não vai aparecer no seu histórico nem ser guardado.</p>
+        </section>
+
+        <div class="dock" id="dock">
+          <form class="composer" id="composer" autocomplete="off">
+            <div class="attachments" id="attachments" aria-label="Anexos"></div>
+            <div class="composer-row">
+              <div class="plus-wrap">
+                <button type="button" class="icon-btn c-plus" id="plus-btn" aria-label="Adicionar arquivos e mais" aria-expanded="false" data-icon="plus"></button>
+                <div class="menu plus-menu" id="plus-menu" hidden>
+                  <button type="button" class="menu-item" data-action="attach"><span data-icon="paperclip"></span>Adicionar fotos e arquivos</button>
+                </div>
+              </div>
+              <label class="sr-only" for="prompt">Chat com o ChatGPT</label>
+              <textarea id="prompt" class="c-text" rows="1" placeholder="Pergunte ao ChatGPT" aria-label="Chat com o ChatGPT"></textarea>
+              <button type="button" class="icon-btn c-mic" id="dictate-btn" aria-label="Iniciar ditado" data-tip="Ditar" data-icon="mic"></button>
+              <button type="submit" class="c-send" id="send-btn" aria-label="Enviar mensagem"></button>
+            </div>
+            <input type="file" id="file-input" multiple hidden>
+          </form>
+          <p class="disclaimer">O ChatGPT pode cometer erros. Confira informações importantes.</p>
+        </div>
+        <div class="drop-overlay" id="drop-overlay" hidden><div>Solte os arquivos aqui para adicioná-los à conversa</div></div>
+      </div>
+    </main>
+  </div>
+
+  <div class="menu chat-menu" id="chat-menu" hidden>
+    <button class="menu-item" data-action="rename-chat"><span data-icon="edit"></span>Renomear</button>
+    <button class="menu-item danger" data-action="delete-chat"><span data-icon="trash"></span>Excluir</button>
+  </div>
+
+  <dialog class="modal search-modal" id="search-modal" aria-label="Buscar chats">
+    <div class="search-head">
+      <input id="search-input" type="search" placeholder="Buscar chats..." aria-label="Buscar chats">
+      <button class="icon-btn" data-action="close-modal" aria-label="Fechar" data-icon="close"></button>
+    </div>
+    <div class="search-results" id="search-results"></div>
+  </dialog>
+
+  <dialog class="modal settings-modal" id="settings-modal" aria-labelledby="settings-title">
+    <div class="modal-head">
+      <h2 id="settings-title">Configurações</h2>
+      <button class="icon-btn" data-action="close-modal" aria-label="Fechar" data-icon="close"></button>
+    </div>
+    <div class="settings-body">
+      <div class="setting-row">
+        <label for="theme-select">Tema</label>
+        <select id="theme-select">
+          <option value="system">Sistema</option>
+          <option value="dark">Escuro</option>
+          <option value="light">Claro</option>
+        </select>
+      </div>
+      <div class="setting-block">
+        <label for="instructions">Instruções personalizadas</label>
+        <p class="setting-hint">O que o ChatGPT deve saber sobre você ou como deve responder?</p>
+        <textarea id="instructions" rows="5" placeholder="Ex.: Sou desenvolvedor e prefiro respostas curtas, com exemplos em JavaScript."></textarea>
+        <div class="setting-actions"><button class="btn" data-action="save-instructions">Salvar</button></div>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Modelo de IA</div>
+          <p class="setting-hint" id="provider-info"></p>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Importar do ChatGPT</div>
+          <p class="setting-hint">Arquivo conversations.json do export de dados do ChatGPT.</p>
+        </div>
+        <button class="btn" data-action="import">Importar</button>
+        <input type="file" id="import-input" accept=".json,application/json" hidden>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Exportar chats</div>
+        <a class="btn" href="/api/export" download="conversations.json">Exportar</a>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">Excluir todos os chats</div>
+        <button class="btn btn-danger" data-action="delete-all">Excluir tudo</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal confirm-modal" id="confirm-modal">
+    <h2 id="confirm-title"></h2>
+    <p id="confirm-text"></p>
+    <div class="confirm-actions">
+      <button class="btn" value="cancel" data-action="close-modal">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok">Excluir</button>
+    </div>
+  </dialog>
+
+  <div class="voice-banner" id="voice-banner" hidden>
+    <span class="voice-dot"></span><span id="voice-status">Ouvindo…</span>
+    <button class="btn" data-action="stop-voice">Encerrar</button>
+  </div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "chatgpt-clone",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Clone do ChatGPT reconstruído a partir de uma análise REA do chatgpt.com",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=20.12"
+  }
+}

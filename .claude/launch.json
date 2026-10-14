@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chatgpt-clone",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3000
+    },
+    {
+      "name": "chatgpt-clone-3002",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "process.env.PORT = '3002'; import('./server.js')"],
+      "port": 3002
+    }
+  ]
+}
